@@ -1,3 +1,5 @@
+<img width="648" height="442" alt="image" src="https://github.com/user-attachments/assets/c76dbd54-7a6c-49b8-94d4-6767f610599b" />
+
 # portalweb
 
 Projeto Spring Boot para CRUD de alunos (tabela `t_aluno`) conectado ao MySQL, com frontend e entrega via webhook.
