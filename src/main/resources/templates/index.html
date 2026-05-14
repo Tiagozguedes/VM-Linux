@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Portal Web - CRUD de Alunos</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2 { color: #2c3e50; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        form { display: grid; gap: 12px; }
+        .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 4px; }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #3182ce; }
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.85; }
+        .btn-primary { background: #3182ce; color: #fff; }
+        .btn-success { background: #38a169; color: #fff; }
+        .btn-danger  { background: #e53e3e; color: #fff; }
+        .btn-warning { background: #d69e2e; color: #fff; }
+        .btn-group { display: flex; gap: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #edf2f7; font-weight: 600; font-size: 14px; }
+        tr:hover { background: #f7fafc; }
+        .empty { text-align: center; padding: 20px; color: #718096; }
+        #msg {
+            display: none;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .msg-ok   { background: #c6f6d5; color: #22543d; }
+        .msg-fail { background: #fed7d7; color: #742a2a; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>📚 Portal Web - Gestão de Alunos</h1>
+    <div id="msg"></div>
+
+    <!-- Cadastro / Edição -->
+    <div class="card">
+        <h2 id="form-title">Cadastrar novo aluno</h2>
+        <form id="form-aluno" onsubmit="salvarAluno(event)">
+            <div class="row">
+                <div>
+                    <label for="rmAluno">RM</label>
+                    <input type="text" id="rmAluno" name="rmAluno" required maxlength="20"/>
+                </div>
+                <div>
+                    <label for="nmAluno">Nome</label>
+                    <input type="text" id="nmAluno" name="nmAluno" required maxlength="100"/>
+                </div>
+                <div>
+                    <label for="dsTurma">Turma</label>
+                    <input type="text" id="dsTurma" name="dsTurma" required maxlength="20"/>
+                </div>
+                <div>
+                    <label for="dsEmail">Email</label>
+                    <input type="email" id="dsEmail" name="dsEmail" maxlength="100"/>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn-success" id="btn-salvar">Salvar</button>
+                <button type="button" class="btn-warning" onclick="resetarForm()">Limpar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Alunos -->
+    <div class="card">
+        <h2>Alunos cadastrados</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>RM</th>
+                    <th>Nome</th>
+                    <th>Turma</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-alunos">
+                <tr th:if="${#lists.isEmpty(alunos)}">
+                    <td colspan="5" class="empty">Nenhum aluno cadastrado ainda.</td>
+                </tr>
+                <tr th:each="a : ${alunos}">
+                    <td th:text="${a.rmAluno}"></td>
+                    <td th:text="${a.nmAluno}"></td>
+                    <td th:text="${a.dsTurma}"></td>
+                    <td th:text="${a.dsEmail}"></td>
+                    <td>
+                        <div class="btn-group">
+                            <button type="button" class="btn-primary"
+                                th:attr="data-rm=${a.rmAluno},data-nm=${a.nmAluno},data-tu=${a.dsTurma},data-em=${a.dsEmail}"
+                                onclick="editarAluno(this)">Editar</button>
+                            <button type="button" class="btn-danger"
+                                th:attr="data-rm=${a.rmAluno}"
+                                onclick="excluirAluno(this.dataset.rm)">Excluir</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Entrega Final -->
+    <div class="card">
+        <h2>🎯 Entrega Final do Desafio</h2>
+        <p>Envia seus dados para o webhook do professor confirmar a conclusão do desafio.</p>
+        <form id="form-entrega" onsubmit="enviarEntrega(event)">
+            <div class="row">
+                <div>
+                    <label for="ent-nome">Nome</label>
+                    <input type="text" id="ent-nome" required/>
+                </div>
+                <div>
+                    <label for="ent-rm">RM</label>
+                    <input type="text" id="ent-rm" required/>
+                </div>
+                <div>
+                    <label for="ent-turma">Turma</label>
+                    <input type="text" id="ent-turma" required/>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn-primary">Enviar entrega</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let modoEdicao = false;
+
+    function mostrarMsg(texto, ok) {
+        const m = document.getElementById('msg');
+        m.textContent = texto;
+        m.className = ok ? 'msg-ok' : 'msg-fail';
+        m.style.display = 'block';
+        setTimeout(() => { m.style.display = 'none'; }, 4000);
+    }
+
+    async function salvarAluno(e) {
+        e.preventDefault();
+        const aluno = {
+            rmAluno: document.getElementById('rmAluno').value,
+            nmAluno: document.getElementById('nmAluno').value,
+            dsTurma: document.getElementById('dsTurma').value,
+            dsEmail: document.getElementById('dsEmail').value
+        };
+        const url = modoEdicao ? '/alunos/' + aluno.rmAluno : '/alunos';
+        const metodo = modoEdicao ? 'PUT' : 'POST';
+        try {
+            const r = await fetch(url, {
+                method: metodo,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(aluno)
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            mostrarMsg(modoEdicao ? 'Aluno atualizado!' : 'Aluno criado!', true);
+            setTimeout(() => location.reload(), 800);
+        } catch (err) {
+            mostrarMsg('Erro ao salvar: ' + err.message, false);
+        }
+    }
+
+    function editarAluno(btn) {
+        document.getElementById('rmAluno').value = btn.dataset.rm;
+        document.getElementById('nmAluno').value = btn.dataset.nm;
+        document.getElementById('dsTurma').value = btn.dataset.tu;
+        document.getElementById('dsEmail').value = btn.dataset.em || '';
+        document.getElementById('rmAluno').readOnly = true;
+        document.getElementById('form-title').textContent = 'Editando aluno ' + btn.dataset.rm;
+        document.getElementById('btn-salvar').textContent = 'Atualizar';
+        modoEdicao = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetarForm() {
+        document.getElementById('form-aluno').reset();
+        document.getElementById('rmAluno').readOnly = false;
+        document.getElementById('form-title').textContent = 'Cadastrar novo aluno';
+        document.getElementById('btn-salvar').textContent = 'Salvar';
+        modoEdicao = false;
+    }
+
+    async function excluirAluno(rm) {
+        if (!confirm('Excluir aluno RM ' + rm + '?')) return;
+        try {
+            const r = await fetch('/alunos/' + rm, { method: 'DELETE' });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            mostrarMsg('Aluno excluido!', true);
+            setTimeout(() => location.reload(), 800);
+        } catch (err) {
+            mostrarMsg('Erro ao excluir: ' + err.message, false);
+        }
+    }
+
+    async function enviarEntrega(e) {
+        e.preventDefault();
+        const dados = {
+            nome: document.getElementById('ent-nome').value,
+            rm: document.getElementById('ent-rm').value,
+            turma: document.getElementById('ent-turma').value
+        };
+        try {
+            const r = await fetch('/entregas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            mostrarMsg('Entrega enviada com sucesso!', true);
+            document.getElementById('form-entrega').reset();
+        } catch (err) {
+            mostrarMsg('Erro ao enviar entrega: ' + err.message, false);
+        }
+    }
+</script>
+</body>
+</html>
